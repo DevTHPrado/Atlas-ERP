@@ -1,0 +1,1 @@
+"""ERP Pequenas Empresas — API."""
