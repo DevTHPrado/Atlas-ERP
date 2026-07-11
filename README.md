@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏢 ERP Pequenas Empresas
+# 🏢 Atlas ERP by DevTHPrado
 
 **ERP empresarial moderno, escalável e preparado para produção.**
 
