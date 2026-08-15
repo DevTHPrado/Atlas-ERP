@@ -8,19 +8,17 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
-- Estrutura monorepo profissional com backend e frontend unificados
-- Docker Compose unificado na raiz do projeto
-- GitHub Actions CI para backend e frontend
-- Documentação open-source (README, LICENSE, CONTRIBUTING, CODE_OF_CONDUCT)
-- ARCHITECTURE.md com documentação completa da arquitetura
+- Backend reescrito em **C# / .NET 8 (ASP.NET Core Web API)** com **Clean Architecture**
+- Mapeamento e persistência com **Entity Framework Core 8** e **Npgsql**
+- Cache e **Distributed Lock** atômico com **Redis 7** e **StackExchange.Redis**
+- Documentação interativa via **Swagger / OpenAPI** com suporte a JWT Bearer
+- Seeder de banco de dados automático em C# para inicialização ágil
+- Multi-stage Dockerfile para compilação e publicação otimizada do .NET 8
 
 ### Changed
-- Reorganização do backend seguindo Clean Architecture pragmática
-- Split de models monolítico em arquivos por domínio
-- Extração de schemas Pydantic para diretório dedicado
-- Reorganização do frontend com separação em services, types, providers
-- Substituição de fetch nativo por Axios no frontend
-- Dockerfiles otimizados para ambos os serviços
+- Migração de FastAPI / SQLAlchemy para .NET 8 / EF Core 8
+- Atualização do `docker-compose.yml` e `docker-compose.prod.yml` para orquestração da API .NET 8
+- Atualização do `README.md` e `docs/ARCHITECTURE.md` para refletir o ecossistema C# / .NET 8
 
 ## [0.1.0] - 2026-07-10
 

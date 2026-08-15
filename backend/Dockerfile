@@ -1,18 +1,28 @@
-FROM python:3.13-slim AS base
-
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Copy solution and project files first for better caching
+COPY Atlas.sln .
+COPY src/Atlas.Domain/Atlas.Domain.csproj src/Atlas.Domain/
+COPY src/Atlas.Application/Atlas.Application.csproj src/Atlas.Application/
+COPY src/Atlas.Infrastructure/Atlas.Infrastructure.csproj src/Atlas.Infrastructure/
+COPY src/Atlas.Api/Atlas.Api.csproj src/Atlas.Api/
 
-COPY requirements/base.txt requirements/base.txt
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements/base.txt
+RUN dotnet restore Atlas.sln
 
-COPY . .
+# Copy source code and build
+COPY src/ src/
+WORKDIR /app/src/Atlas.Api
+RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+COPY --from=build /app/publish .
+
+ENV ASPNETCORE_URLS=http://0.0.0.0:8000
+ENV ASPNETCORE_ENVIRONMENT=Production
+EXPOSE 8000
+
+ENTRYPOINT ["dotnet", "Atlas.Api.dll"]

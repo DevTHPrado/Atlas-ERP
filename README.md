@@ -2,14 +2,14 @@
 
 # 🏢 Atlas ERP by DevTHPrado
 
-**ERP empresarial moderno, escalável e preparado para produção.**
+**ERP empresarial moderno, ágil e preparado para alta concorrência.**
 
-Construído com Clean Architecture, FastAPI e Next.js.
+Construído com Clean Architecture, C# / .NET 8 Web API, Entity Framework Core e Next.js 15.
 
 [![Backend CI](../../actions/workflows/ci-backend.yml/badge.svg)](../../actions/workflows/ci-backend.yml)
 [![Frontend CI](../../actions/workflows/ci-frontend.yml/badge.svg)](../../actions/workflows/ci-frontend.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python 3.13+](https://img.shields.io/badge/Python-3.13+-3776ab.svg)](https://www.python.org/)
+[![.NET 8](https://img.shields.io/badge/.NET-8.0-512bd4.svg)](https://dotnet.microsoft.com/)
 [![Next.js 15](https://img.shields.io/badge/Next.js-15-000000.svg)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-3178c6.svg)](https://www.typescriptlang.org/)
 
@@ -19,25 +19,25 @@ Construído com Clean Architecture, FastAPI e Next.js.
 
 ## 📋 Sobre
 
-Sistema ERP completo para pequenas empresas brasileiras. Gerencie vendas, estoque, financeiro, clientes e fornecedores em uma única plataforma.
+Sistema ERP completo voltado para comércio e prestação de serviços, com foco em usabilidade moderna, RBAC e operações rápidas de alto volume.
 
 ### Stack
 
 | Camada | Tecnologias |
 |--------|------------|
-| **Backend** | Python 3.13 · FastAPI · SQLAlchemy 2 · Alembic · PostgreSQL · Pydantic V2 · JWT · bcrypt |
-| **Frontend** | Next.js 15 · React 19 · TypeScript · TailwindCSS · Shadcn/ui · TanStack Query · Axios · Recharts |
-| **DevOps** | Docker Compose · GitHub Actions · ESLint · Prettier · Ruff · Black |
+| **Backend** | C# · .NET 8 (Web API) · Entity Framework Core 8 · Npgsql · PostgreSQL 16 · Redis 7 (Cache & Distributed Lock) · JWT · BCrypt.Net |
+| **Frontend** | Next.js 15 · React 19 · TypeScript · TailwindCSS · Shadcn/ui · Radix UI · TanStack Query · Zustand · Axios · Recharts · Zod |
+| **DevOps & Infra** | Docker Compose · GitHub Actions · ESLint · Prettier · Multi-stage Dockerfile |
 
 ### Funcionalidades
 
-- 🔐 **Autenticação** — JWT com RBAC (Role-Based Access Control)
+- 🔐 **Autenticação & RBAC** — JWT com controle granular de permissões por Role
 - 📊 **Dashboard Executivo** — KPIs de receita, lucro, estoque e fluxo de caixa
-- 👥 **Gestão de Usuários** — Listagem com permissões por role
-- 🏗️ **Entidades Centrais** — Empresas, clientes, fornecedores, produtos, categorias, marcas
-- 📦 **Estoque** — Movimentações e alertas de estoque mínimo
+- 👥 **Gestão de Usuários** — Listagem e edição de perfis com permissões por role
+- 🏗️ **Entidades Comerciais** — Empresas (Multi-tenant), clientes, fornecedores, produtos, categorias, marcas, unidades e depósitos
+- 📦 **Estoque com Lock Distribuído** — Movimentações atômicas com Redis Distributed Lock para evitar concorrência desordenada
 - 💰 **Financeiro** — Contas a pagar e receber com controle de vencimento
-- 📝 **Auditoria** — Log imutável de operações
+- 📝 **Auditoria** — Rastreabilidade e log de operações
 
 ---
 
@@ -66,8 +66,7 @@ docker compose up --build
 | Serviço | URL |
 |---------|-----|
 | **Frontend** | http://localhost:3000 |
-| **API Docs** | http://localhost:8000/docs |
-| **ReDoc** | http://localhost:8000/redoc |
+| **API Docs (Swagger)** | http://localhost:8000/docs |
 | **Health Check** | http://localhost:8000/health |
 
 ### Credenciais de Demonstração
@@ -83,26 +82,25 @@ docker compose up --build
 
 ```
 erp-pequenas-empresas/
-├── backend/         # FastAPI + SQLAlchemy + PostgreSQL
-├── frontend/        # Next.js 15 + React 19 + TypeScript
-├── docs/            # Documentação do projeto
-├── .github/         # GitHub Actions CI
+├── backend/                    # C# / .NET 8 Web API
+│   ├── Atlas.sln               # Solução .NET
+│   └── src/
+│       ├── Atlas.Domain/       # Entidades, Enums e Interfaces centrais
+│       ├── Atlas.Application/  # DTOs, Casos de uso e Interfaces de serviços
+│       ├── Atlas.Infrastructure/# EF Core DbContext, Redis Cache/Lock, Identity
+│       └── Atlas.Api/          # Controllers, Middlewares, Program.cs, Dockerfile
+├── frontend/                   # Next.js 15 + React 19 + TypeScript + Shadcn/ui
+├── docs/                       # Documentação técnica do projeto
+├── .github/                    # GitHub Actions CI
 └── docker-compose.yml
 ```
 
-O backend segue **Clean Architecture** com separação em:
+O backend segue rigorosamente a **Clean Architecture**:
 
-- `config/` — Configurações e variáveis de ambiente
-- `core/` — Cross-cutting concerns (segurança, logging)
-- `models/` — Entidades SQLAlchemy (1 arquivo por domínio)
-- `schemas/` — DTOs Pydantic para request/response
-- `repositories/` — Acesso a dados (Repository Pattern)
-- `services/` — Lógica de negócio (Service Layer)
-- `api/` — Rotas HTTP e controllers
-- `auth/` — Módulo de autenticação
-- `dependencies/` — Injeção de dependência FastAPI
-- `middlewares/` — Middlewares HTTP
-- `exceptions/` — Exceções customizadas
+- `Atlas.Domain` — Entidades puras e regras de domínio sem dependências externas
+- `Atlas.Application` — DTOs, contratos de serviços e casos de uso de negócio
+- `Atlas.Infrastructure` — Implementação com EF Core, Npgsql, Redis Cache/Lock e BCrypt
+- `Atlas.Api` — Controllers RESTful, Middlewares (CorrelationId, Exception Handling), Swagger e RBAC
 
 Leia [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) para detalhes completos.
 
@@ -110,25 +108,22 @@ Leia [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) para detalhes completos.
 
 ## 🛠️ Desenvolvimento
 
-### Backend
+### Backend (.NET 8)
 
 ```bash
 cd backend
 
-# Instalar dependências
-pip install -e ".[dev]"
+# Restaurar dependências
+dotnet restore
 
-# Rodar testes
-pytest
+# Executar a API em modo desenvolvimento
+dotnet run --project src/Atlas.Api
 
-# Lint
-ruff check .
-
-# Formatação
-black .
+# Executar testes
+dotnet test
 ```
 
-### Frontend
+### Frontend (Next.js 15)
 
 ```bash
 cd frontend
@@ -149,14 +144,11 @@ npm run typecheck
 ### Comandos Docker úteis
 
 ```bash
-# Rodar migrations
-docker compose exec backend alembic upgrade head
+# Subir ambiente completo
+docker compose up --build -d
 
-# Rodar seeds
-docker compose exec backend python -m app.seeds
-
-# Rodar testes do backend
-docker compose exec backend pytest
+# Visualizar logs da API
+docker compose logs -f backend
 
 # Acessar shell do banco
 docker compose exec postgres psql -U erp -d erp

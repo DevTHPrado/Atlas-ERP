@@ -5,7 +5,7 @@ import axios from "axios";
  * Automatically injects the Bearer token from localStorage.
  */
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1",
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api/v1",
   headers: {
     "Content-Type": "application/json",
   },

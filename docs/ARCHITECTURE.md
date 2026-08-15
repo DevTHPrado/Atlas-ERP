@@ -1,254 +1,78 @@
-# Arquitetura do ERP Pequenas Empresas
+# Arquitetura do Atlas ERP (ERP Ágil / Gestão Comercial)
 
 ## Visão Geral
 
-Este ERP é estruturado como um **monorepo** com backend, frontend e infraestrutura isolados por responsabilidade. Tudo roda com um único `docker compose up`.
+O **Atlas ERP** é estruturado como um monorepo corporativo, combinando o alto rendimento e tipagem forte do ecossistema **C# / .NET 8** no backend com a flexibilidade moderna do **Next.js 15** no frontend.
 
-| Camada | Stack |
-|--------|-------|
-| **Backend** | Python 3.13, FastAPI, SQLAlchemy 2, Alembic, PostgreSQL, Redis, Celery, JWT, Pydantic V2 |
-| **Frontend** | Next.js 15, React 19, TypeScript, TailwindCSS, Shadcn/ui, TanStack Query, Axios, Recharts, Zustand |
-| **DevOps** | Docker Compose, GitHub Actions, ESLint, Prettier, Ruff, Black |
+| Camada | Stack Principal |
+|--------|-----------------|
+| **Backend** | C# · .NET 8 (ASP.NET Core Web API) · Entity Framework Core 8 · Npgsql · PostgreSQL 16 · Redis 7 (Cache & Distributed Lock) · JWT · BCrypt.Net |
+| **Frontend** | Next.js 15 · React 19 · TypeScript 5.7+ · TailwindCSS · Shadcn/ui · Radix UI · TanStack Query · Zustand · Axios · Recharts · Zod |
+| **DevOps & Infra** | Docker Compose · Multi-stage Dockerfiles · GitHub Actions |
 
 ---
 
-## Estrutura de Pastas
+## Estrutura de Pastas (.NET 8 Clean Architecture)
 
 ```
 erp-pequenas-empresas/
-├── backend/                    # API REST e lógica de negócio
-│   ├── app/
-│   │   ├── api/                # Rotas HTTP (controllers)
-│   │   │   ├── router.py       # Agrega todos os sub-routers
-│   │   │   └── routes/         # Um arquivo por domínio
-│   │   ├── auth/               # Módulo de autenticação
-│   │   │   ├── schemas.py      # DTOs de login/token
-│   │   │   └── service.py      # Lógica de autenticação
-│   │   ├── config/             # Configurações da aplicação
-│   │   │   └── settings.py     # Pydantic BaseSettings
-│   │   ├── core/               # Cross-cutting concerns
-│   │   │   ├── logging.py      # Configuração de logs
-│   │   │   └── security.py     # bcrypt, JWT
-│   │   ├── database/           # Conexão e sessão
-│   │   │   └── session.py      # Engine, SessionLocal, get_session
-│   │   ├── dependencies/       # FastAPI Depends()
-│   │   │   └── auth.py         # CurrentUser, require_permission
-│   │   ├── exceptions/         # Exceções customizadas
-│   │   │   └── handlers.py     # AppError, UnauthorizedError, etc.
-│   │   ├── middlewares/        # Middlewares HTTP
-│   │   │   └── correlation_id.py
-│   │   ├── models/             # SQLAlchemy ORM (1 arquivo por domínio)
-│   │   │   ├── base.py         # Base, UuidPkMixin, TimestampMixin
-│   │   │   ├── company.py      # Company
-│   │   │   ├── user.py         # User, RefreshToken
-│   │   │   ├── role.py         # Role, Permission
-│   │   │   ├── product.py      # Category, Brand, Product, StockMovement
-│   │   │   ├── customer.py     # Customer
-│   │   │   ├── supplier.py     # Supplier
-│   │   │   ├── order.py        # SaleOrder, PurchaseOrder
-│   │   │   ├── financial.py    # FinancialAccount
-│   │   │   └── audit.py        # AuditLog
-│   │   ├── repositories/       # Repository Pattern
-│   │   │   └── user_repository.py  # Interface ABC + implementação SQLAlchemy
-│   │   ├── schemas/            # Pydantic DTOs
-│   │   │   ├── dashboard.py    # DashboardKpis, ChartPoint, DashboardResponse
-│   │   │   └── user.py         # UserListItem
-│   │   ├── services/           # Service Layer (lógica de negócio)
-│   │   ├── utils/              # Helpers genéricos
-│   │   ├── main.py             # Application factory
-│   │   ├── seeds.py            # Dados de demonstração
-│   │   └── worker.py           # Celery worker
-│   ├── alembic/                # Database migrations
-│   ├── tests/                  # Testes automatizados
-│   ├── scripts/                # Scripts utilitários
-│   ├── requirements/           # Dependências (base.txt, dev.txt)
-│   ├── pyproject.toml          # Configuração do projeto Python
-│   └── Dockerfile
+├── backend/
+│   ├── Atlas.sln                     # Solução .NET 8
+│   ├── Dockerfile                    # Multi-stage build (.NET 8 SDK + ASP.NET Runtime)
+│   └── src/
+│       ├── Atlas.Domain/             # Entidades, Enums e Interfaces Centrais
+│       │   ├── Common/               # BaseEntity, ISoftDelete, ITenantEntity
+│       │   ├── Entities/             # Company, User, Role, Customer, Product, etc.
+│       │   └── Enums/                # MovementType, StockMovementReason, etc.
+│       ├── Atlas.Application/        # Casos de Uso, DTOs e Interfaces de Serviços
+│       │   ├── Common/               # PaginatedResponse<T>
+│       │   ├── DTOs/                 # Auth, Dashboard, Customer, Product DTOs
+│       │   ├── Exceptions/           # AppException, NotFoundException, etc.
+│       │   └── Interfaces/           # IAuthService, IProductService, IStockService, etc.
+│       ├── Atlas.Infrastructure/     # Acesso a Dados, EF Core, Redis e Criptografia
+│       │   ├── Data/                 # AtlasDbContext, DatabaseSeeder
+│       │   ├── Identity/             # PasswordHasher (BCrypt), JwtTokenGenerator
+│       │   ├── Redis/                # RedisCacheService, RedisDistributedLockService
+│       │   └── Services/             # Implementações de serviços de aplicação
+│       └── Atlas.Api/                # ASP.NET Core Web API
+│           ├── Controllers/          # Auth, Dashboard, Users, Customers, Products
+│           ├── Middlewares/          # CorrelationIdMiddleware, GlobalExceptionHandler
+│           ├── Security/             # RBAC (HasPermissionAttribute, PermissionHandler)
+│           ├── Program.cs            # Injeção de dependências e pipeline HTTP
+│           └── appsettings.json      # Configurações de conexão e JWT
 │
-├── frontend/                   # Aplicação web
+├── frontend/                         # Next.js 15 (App Router)
 │   ├── src/
-│   │   ├── app/                # Next.js App Router
-│   │   ├── components/         # Componentes React
-│   │   │   ├── auth/           # Componentes de autenticação
-│   │   │   ├── dashboard/      # Componentes do dashboard
-│   │   │   └── ui/             # Componentes base (Shadcn/ui)
-│   │   ├── hooks/              # Custom React hooks
-│   │   ├── services/           # API service layer (Axios)
-│   │   ├── types/              # TypeScript types + Zod schemas
-│   │   ├── lib/                # Utilidades (cn)
-│   │   ├── providers/          # Context providers
-│   │   ├── stores/             # Zustand stores
-│   │   ├── contexts/           # React contexts
-│   │   ├── layouts/            # Layout components
-│   │   ├── styles/             # Estilos compartilhados
-│   │   ├── utils/              # Funções utilitárias
-│   │   └── middleware.ts       # Next.js middleware
-│   ├── public/                 # Assets estáticos
+│   │   ├── app/                      # Rotas e páginas (Dashboard, Clientes, Produtos, Estoque)
+│   │   ├── components/               # Componentes UI (Shadcn/ui, Radix UI)
+│   │   ├── services/                 # Clientes de API Axios
+│   │   ├── stores/                   # Gerenciamento de estado Zustand
+│   │   └── types/                    # Tipagens TypeScript e validação Zod
 │   ├── package.json
 │   └── Dockerfile
 │
-├── docs/                       # Documentação
-├── .github/workflows/          # CI/CD
-├── docker-compose.yml          # Orquestração unificada
+├── docker-compose.yml                # Orquestração do ambiente completo
+├── docker-compose.prod.yml           # Orquestração de produção
 └── README.md
 ```
 
 ---
 
-## Responsabilidades de Cada Módulo
+## Padrões Arquiteturais e Decisões de Design
 
-### Backend
+### 1. Clean Architecture (Separação em Camadas)
+1. **Domain**: Contém as entidades essenciais de negócio e interfaces puras. Não depende de nenhum framework de banco de dados ou UI.
+2. **Application**: Contém os contratos de casos de uso, DTOs de request/response e regras agnósticas a banco.
+3. **Infrastructure**: Implementa os acessos externos — Entity Framework Core com Npgsql (PostgreSQL), StackExchange.Redis para cache e locks, e BCrypt/JWT para autenticação.
+4. **API**: Camada de apresentação HTTP com controladores RESTful, middlewares de correlação/exceções e documentação Swagger interativa.
 
-| Módulo | Responsabilidade |
-|--------|-----------------|
-| `config/` | Carrega variáveis de ambiente via Pydantic BaseSettings |
-| `core/` | Hashing de senhas (bcrypt), criação/validação de JWT, configuração de logs |
-| `database/` | Engine SQLAlchemy, session factory, dependency `get_session` |
-| `models/` | Definição das tabelas do banco (1 arquivo por domínio) |
-| `schemas/` | DTOs Pydantic para validação de request/response |
-| `repositories/` | Abstração de acesso a dados (interface + implementação) |
-| `services/` | Lógica de negócio complexa (Service Layer) |
-| `auth/` | Módulo completo de autenticação (schemas + service) |
-| `api/` | Rotas HTTP que delegam para services/repositories |
-| `dependencies/` | Funções `Depends()` do FastAPI (auth, session, etc.) |
-| `middlewares/` | Correlation ID, logging, etc. |
-| `exceptions/` | Hierarquia de exceções e exception handlers |
+### 2. Concorrência e Distributed Lock com Redis
+Para operações críticas como movimentações de estoque e reconciliação de inventário, o sistema utiliza o **Redis Distributed Lock** (`IDistributedLockService`) com liberação atômica via scripts Lua. Isso evita condições de corrida (*race conditions*) em cenários de alta demanda simultânea.
 
-### Frontend
+### 3. Autenticação e RBAC (Role-Based Access Control)
+- **JWT (JSON Web Tokens)**: Tokens assinados com HMAC-SHA256 contendo `company_id`, `sub`, `email` e claims de `permission`.
+- **HasPermissionAttribute**: Autorização declarativa nos endpoints HTTP verificando se o usuário logado possui a permissão requerida (ou o wildcard administrativo `admin:*`).
 
-| Módulo | Responsabilidade |
-|--------|-----------------|
-| `app/` | Next.js App Router (pages, layouts, global CSS) |
-| `components/` | Componentes React organizados por feature |
-| `services/` | Funções de API usando Axios com interceptors |
-| `types/` | TypeScript types e Zod schemas |
-| `stores/` | Estado global com Zustand |
-| `providers/` | Context providers (Theme, Query, etc.) |
-| `hooks/` | Custom hooks reutilizáveis |
-| `lib/` | Utilidades base (`cn` para Tailwind) |
-| `utils/` | Funções utilitárias (formatação, etc.) |
-
----
-
-## Como Iniciar o Projeto
-
-### Com Docker (recomendado)
-
-```bash
-# 1. Clone o repositório
-git clone https://github.com/seu-usuario/erp-pequenas-empresas.git
-cd erp-pequenas-empresas
-
-# 2. Configure o .env
-cp .env.example .env
-
-# 3. Suba tudo
-docker compose up --build
-```
-
-O `docker compose up` executa automaticamente:
-1. PostgreSQL (healthcheck)
-2. Redis (healthcheck)
-3. Backend (migrations + seeds + uvicorn)
-4. Worker Celery
-5. Frontend Next.js
-
-### Sem Docker
-
-#### Backend
-
-```bash
-cd backend
-
-# Criar virtualenv
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-# .venv\Scripts\activate   # Windows
-
-# Instalar dependências
-pip install -e ".[dev]"
-
-# Configurar banco local
-# (PostgreSQL deve estar rodando em localhost:5432)
-cp ../.env.example .env
-# Edite .env com DATABASE_URL apontando para localhost
-
-# Rodar migrations
-alembic upgrade head
-
-# Rodar seeds
-python -m app.seeds
-
-# Iniciar servidor
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-#### Frontend
-
-```bash
-cd frontend
-
-# Instalar dependências
-npm install
-
-# Configurar variáveis
-# Crie .env.local com NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
-
-# Iniciar dev server
-npm run dev
-```
-
----
-
-## Padrões Arquiteturais
-
-### Clean Architecture
-- Separação clara entre camadas (models → repositories → services → api)
-- Dependências apontam para dentro (api depende de services, services de repositories)
-
-### Repository Pattern
-- Interface abstrata (`UserRepository` ABC) + implementação concreta (`SqlAlchemyUserRepository`)
-- Permite trocar o ORM sem alterar a lógica de negócio
-
-### Service Layer
-- `AuthService` encapsula a lógica de autenticação
-- Routes delegam para services, não contêm lógica de negócio
-
-### Dependency Injection
-- FastAPI `Depends()` para injetar sessão, repositórios e usuário autenticado
-- Facilita testes unitários com mocks
-
-### RBAC (Role-Based Access Control)
-- Permissões granulares (`dashboard:read`, `users:read`, `admin:*`)
-- Middleware `require_permission` valida no nível da rota
-
----
-
-## Boas Práticas para Futuras Implementações
-
-### Adicionando um novo módulo (ex: Produtos CRUD)
-
-1. **Schema**: Crie `app/schemas/product.py` com DTOs Pydantic
-2. **Repository**: Crie `app/repositories/product_repository.py`
-3. **Service**: Crie `app/services/product_service.py`
-4. **Route**: Crie `app/api/routes/products.py`
-5. **Router**: Registre em `app/api/router.py`
-6. **Frontend**: Crie `src/types/product.types.ts`, `src/services/product.service.ts`, `src/components/products/`
-
-### Convenções
-
-- **Nomes**: snake_case para Python, camelCase para TypeScript
-- **Commits**: Conventional Commits (`feat:`, `fix:`, `refactor:`)
-- **Branches**: `feature/*`, `fix/*`, `refactor/*`
-- **Formatação**: Black (Python), Prettier (TypeScript)
-- **Linting**: Ruff (Python), ESLint (TypeScript)
-- **Testes**: pytest (backend), vitest (frontend — futuro)
-
-### Evolução Planejada
-
-- Materialized views para dashboard de alto volume
-- Soft delete para entidades com requisito regulatório
-- Event sourcing para auditoria avançada
-- Módulos de emissão fiscal (NF-e)
-- Workflows de aprovação
-- Relatórios avançados com exportação
+### 4. Resiliência e Observabilidade
+- **Correlation ID Middleware**: Rastreia requisições ponta a ponta adicionando o header `X-Correlation-ID`.
+- **Global Exception Handler**: Captura exceções e formata respostas de erro padronizadas baseadas em RFC 7807 Problem Details.
